@@ -6,6 +6,6 @@ import br.com.jeramovies.domain.entity.MovieSaved
 
 interface MyListRepository {
 
-    fun getSavedMovies(): List<MovieSaved>
-    fun saveMovie(movie: Movie): MovieManagedStatus
+    suspend fun getSavedMovies(): List<MovieSaved>
+    suspend fun saveMovie(movie: Movie): MovieManagedStatus
 }

@@ -64,10 +64,15 @@ class MoviesViewModel(
     }
 
     fun onSaveClicked(movie: Movie) {
-        when (myListRepository.saveMovie(movie)) {
-            is MoviePersisted -> showToast(strings.movieSavedToList, Toast.LENGTH_SHORT)
-            is MovieRemoved -> showToast(strings.movieRemovedFromList, Toast.LENGTH_SHORT)
-            is MoviePersistError -> showToast(strings.moviePersistError, Toast.LENGTH_SHORT)
-        }
+        launchAsync(
+            block = { myListRepository.saveMovie(movie) },
+            onSuccess = { status ->
+                when (status) {
+                    is MoviePersisted -> showToast(strings.movieSavedToList, Toast.LENGTH_SHORT)
+                    is MovieRemoved -> showToast(strings.movieRemovedFromList, Toast.LENGTH_SHORT)
+                    is MoviePersistError -> showToast(strings.moviePersistError, Toast.LENGTH_SHORT)
+                }
+            }
+        )
     }
 }

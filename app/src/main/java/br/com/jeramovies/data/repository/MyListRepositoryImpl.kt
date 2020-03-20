@@ -1,25 +1,30 @@
 package br.com.jeramovies.data.repository
 
-import br.com.jeramovies.data.util.addOrRemoveIfExists
-import br.com.jeramovies.domain.entity.Movie
-import br.com.jeramovies.domain.entity.MovieManagedStatus
-import br.com.jeramovies.domain.entity.MovieSaved
+import br.com.jeramovies.data.local.dao.MovieSavedDao
+import br.com.jeramovies.domain.entity.*
 import br.com.jeramovies.domain.repository.MyListRepository
 import br.com.jeramovies.domain.util.W500
-import io.realm.Realm
 
-class MyListRepositoryImpl : MyListRepository {
-    private val realm = Realm.getDefaultInstance()
+class MyListRepositoryImpl(
+    private val dao: MovieSavedDao
+) : MyListRepository {
 
-    override fun getSavedMovies() = realm.where(MovieSaved::class.java).findAll().toList()
+    override suspend fun getSavedMovies() = dao.getSavedMovies()
 
-    override fun saveMovie(movie: Movie): MovieManagedStatus {
+    override suspend fun saveMovie(movie: Movie): MovieManagedStatus {
         val movieToSave = MovieSaved(
             movie.id,
             movie.title,
             movie.voteAverage,
             movie.getPosterUrl(W500)
         )
-        return realm.addOrRemoveIfExists(movieToSave, "id", movieToSave.id)
+        val moviePersisted = dao.getSavedMovie(movieToSave.id)
+        return if (moviePersisted.isEmpty()) {
+            dao.insertMovieSaved(movieToSave)
+            MoviePersisted()
+        } else {
+            dao.deleteMovie(movieToSave)
+            MovieRemoved()
+        }
     }
 }

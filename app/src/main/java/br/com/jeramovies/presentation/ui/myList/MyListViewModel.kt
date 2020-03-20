@@ -14,7 +14,10 @@ class MyListViewModel(repository: MyListRepository) : BaseViewModel() {
     private val _savedMovies by lazy { MutableLiveData<List<MovieSaved>>() }
 
     init {
-        _savedMovies.value = repository.getSavedMovies()
+        launchAsync(
+            block = { repository.getSavedMovies() },
+            onSuccess = { savedMovies -> _savedMovies.value = savedMovies  }
+        )
     }
 
     fun onMovieClicked(movieSaved: MovieSaved) {

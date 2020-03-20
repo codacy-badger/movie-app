@@ -1,17 +1,13 @@
 package br.com.jeramovies.domain.entity
 
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-open class MovieSaved(
+@Entity(tableName = "movie_saved")
+data class MovieSaved(
     @PrimaryKey
     var id: Int = 0,
     var title: String = "",
     var voteAverage: Double? = 0.0,
     var posterUrl: String = ""
-) : RealmObject() {
-
-    override fun equals(other: Any?): Boolean {
-        return hashCode() == other.hashCode()
-    }
-}
+)
