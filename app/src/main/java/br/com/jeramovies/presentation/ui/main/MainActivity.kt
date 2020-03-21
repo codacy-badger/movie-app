@@ -22,6 +22,11 @@ class MainActivity : BaseActivity(), BottomNavigationView.OnNavigationItemSelect
     override val baseViewModel: BaseViewModel get() = viewModel
 
     private val viewModel: MainViewModel by viewModel()
+    private val searchFragment by lazy { SearchMoviesFragment() }
+    private val myListFragment by lazy { MyListFragment() }
+    private val mainFragment by lazy { MainFragment() }
+    private lateinit var activeFragmentBeforeSearch: Fragment
+    private lateinit var activeFragment: Fragment
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +34,7 @@ class MainActivity : BaseActivity(), BottomNavigationView.OnNavigationItemSelect
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.bottomNavigation.setOnNavigationItemSelectedListener(this)
         setSupportActionBar(binding.toolbar)
-        showFragment(MainFragment())
+        setupFragments()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -42,7 +47,7 @@ class MainActivity : BaseActivity(), BottomNavigationView.OnNavigationItemSelect
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return if (item.itemId == R.id.action_search) {
             setupSearchView((item.actionView as SearchView))
-            showFragment(SearchMoviesFragment(), addToBackStack = true)
+            showFragment(searchFragment)
             true
         } else super.onOptionsItemSelected(item)
     }
@@ -50,11 +55,11 @@ class MainActivity : BaseActivity(), BottomNavigationView.OnNavigationItemSelect
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_movies -> {
-                showFragment(MainFragment())
+                showFragment(mainFragment)
                 true
             }
             R.id.action_my_list -> {
-                showFragment(MyListFragment())
+                showFragment(myListFragment)
                 binding.appBarLayout.setExpanded(true)
                 true
             }
@@ -62,23 +67,41 @@ class MainActivity : BaseActivity(), BottomNavigationView.OnNavigationItemSelect
         }
     }
 
-    private fun showFragment(fragment: Fragment, addToBackStack: Boolean = false) {
-        if (addToBackStack)
-            supportFragmentManager.beginTransaction()
-                .replace(binding.fragmentContainer.id, fragment)
-                .addToBackStack(null)
-                .commit()
-        else
-            supportFragmentManager.beginTransaction()
-                .replace(binding.fragmentContainer.id, fragment)
-                .commit()
+    private fun setupFragments() {
+        addHideFragmentToStack(searchFragment)
+        addHideFragmentToStack(myListFragment)
+        addActiveFragmentToStack(mainFragment)
+    }
+
+    private fun addHideFragmentToStack(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .add(binding.fragmentContainer.id, fragment)
+            .hide(fragment)
+            .commit()
+    }
+
+    private fun addActiveFragmentToStack(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .add(binding.fragmentContainer.id, fragment)
+            .commit()
+        activeFragment = fragment
+    }
+
+    private fun showFragment(fragmentToShow: Fragment) {
+        if (fragmentToShow is SearchMoviesFragment)
+            activeFragmentBeforeSearch = activeFragment
+        supportFragmentManager.beginTransaction()
+            .hide(activeFragment)
+            .show(fragmentToShow)
+            .commit()
+        activeFragment = fragmentToShow
     }
 
     private fun setupSearchView(searchView: SearchView) {
         searchView.observeChanges(lifecycle, viewModel::onSearchText)
         searchView.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewDetachedFromWindow(p0: View?) {
-                supportFragmentManager.popBackStack()
+                showFragment(activeFragmentBeforeSearch)
             }
 
             override fun onViewAttachedToWindow(p0: View?) {/* NOTHING TO DO */
